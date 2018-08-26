@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { Frase } from '../shared/frase.model'
+import { StatusJogo } from '../shared/statusJogo.model'
 import { FRASES } from './frases-mock'
 
 @Component({
@@ -10,14 +11,16 @@ import { FRASES } from './frases-mock'
 export class PainelComponent implements OnInit {
   public frases: Frase[] = FRASES
   public instrucao: String = 'Traduza a frase:'
-  public resposta: String
-
-  public rodada: number = 0
+  public resposta: String = ''  
   public rodadaFrase: Frase
-  public progresso: number
+  public rodada: number = 0
+  public progresso: number = 0
+  public tentativas: number = 3
+
+  @Output() public encerrarJogo = new EventEmitter()
 
   constructor() {
-    this.rodadaFrase = this.frases[this.rodada]
+    this.atualizaRodada()
   }
 
   ngOnInit() {
@@ -29,11 +32,22 @@ export class PainelComponent implements OnInit {
 
   public verificaResposta(): void{
     if(this.rodadaFrase.frasePtBr != this.resposta){
-      alert('Tadução incorreta!');
-      return
+      if(--this.tentativas === -1){
+        this.encerrarJogo.emit(new StatusJogo(false))
+      }       
+    }else{
+      this.progresso += (100 / this.frases.length)
+      
+      if(++this.rodada === this.frases.length){
+        this.encerrarJogo.emit(new StatusJogo(true))
+      }
+      
+      this.atualizaRodada()    
     }
+  }
 
-    this.progresso += 100 / this.frases.length
-    this.rodadaFrase = this.frases[++this.rodada]
+  public atualizaRodada(): void{
+    this.rodadaFrase = this.frases[this.rodada]
+    this.resposta = ""
   }
 }
